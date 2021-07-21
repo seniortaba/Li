@@ -3,47 +3,71 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Base;
 use Illuminate\Support\Facades\DB;
+use PDO;
+use PDOStatement;
+use PDOException;
+
+
 
 class BaseController extends Controller
 {
-    public function getBases()
-    {
-        $bases = DB::table('bases')->get();
+    private $baseInit;
+    private $stmt;
 
-        return view("index")->with('bases', $bases);
+    public function __construct(Request $request)
+    {
+        $command = $request['base'];
+
+        foreach ($command as $baseId) {
+//            $bases = [];
+            $bases = DB::table('bases')->where('id', $baseId)->get();
+
+            foreach ($bases as $base) {
+                $getBase = [
+                    'id' => $base->id,
+                    'host' => $base->host,
+                    'user' => $base->user,
+                    'password' => $base->password,
+                    'dbname' => $base->dbname,
+                ];
+            }
+        }
+
+        //Set DSN
+        $dsn = 'mysql:host=' . $getBase['host'] . ';dbname=' . $getBase['dbname'];
+
+        //Set Options
+        $options = array(
+            PDO::ATTR_PERSISTENT => true,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+        );
+
+        // PDO instance
+        try {
+            $this->baseInit = new PDO($dsn, $getBase['user'], $getBase['password'], $options);
+        } catch (PDOException $e) {
+            die($e->getMessage());
+        }
+
+
     }
 
-    public function getBaseRequest()
+    public function query($query)
     {
-       $comand = $_REQUEST['base'];
+        $this->stmt = $this->baseInit->prepare($query);
+    }
 
-        print_r(array_values($comand));
+    public function execute()
+    {
+        return $this->stmt->execute();
+    }
 
-        foreach($comand as $baseId) {
-            $getBase = [
-                'id' => $baseId->id,
-                'host'=> $baseId->host,
-                'user'=> $baseId->user,
-                'password'=> $baseId->password,
-                'dbname'=> $baseId->dbname,
-            ];
-        }
-       die($getBase);
-
-        
+    public function  resultSet()
+    {
+        $this->execute();
+        return $this->stmt->fetchAll(PDO::FETCH_OBJ);
+    }
 
 
-        // $baseInit = new PDO("mysql:host=$getBase['dbname'];dbname=$getBase['dbname']", 
-        // $getBase['user'], $getBase['paassword']);
-
-        // if($baseInit->error){
-        //     die('fuck');
-        // }else{
-        //     return "corect";
-        // }
-    // }
-    
-   }
 }

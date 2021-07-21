@@ -1,7 +1,9 @@
 <?php
 
-use App\Http\Controllers\BaseController;
+
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\BaseController;
+use App\Http\Controllers\PostsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,5 +17,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 
-Route::get('/', [BaseController::class, 'getBases']);
-Route::get('/base', [BaseController::class, 'getBaseRequest'])->name('getbase');
+Route::get('/', [PostsController::class, 'getBases'])->name('home');
+
+Route::get('/base', [PostsController::class, 'getPosts'])->name('getBasePost');
+Route::get('/download_csv', [BaseController::class, 'download_csv'])->name('download_csv');
